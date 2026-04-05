@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Weather App</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Segoe UI', sans-serif;
+    min-height: 100vh;
+    background: linear-gradient(135deg, #c9e8ff 0%, #ffffff 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+
+  .container { width: 100%; max-width: 420px; }
+
+  h1 {
+    text-align: center;
+    color: #1e90ff;
+    font-size: 1.8rem;
+    margin-bottom: 6px;
+    letter-spacing: 1px;
+  }
+
+  .subtitle {
+    text-align: center;
+    color: #88b8e0;
+    font-size: 0.85rem;
+    margin-bottom: 24px;
+  }
+
+  .search-box {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+
+  .search-box input {
+    flex: 1;
+    padding: 14px 18px;
+    border: 2px solid #d0e8ff;
+    border-radius: 50px;
+    font-size: 1rem;
+    outline: none;
+    color: #333;
+    background: #fff;
+    transition: border-color 0.2s;
+  }
+
+  .search-box input:focus { border-color: #1e90ff; }
+  .search-box input::placeholder { color: #b0c8e0; }
+
+  .search-box button {
+    padding: 14px 22px;
+    background: #1e90ff;
+    color: #fff;
+    border: none;
+    border-radius: 50px;
+    font-size: 1rem;
+    cursor: pointer;
+    font-weight: 600;
+    transition: background 0.2s, transform 0.1s;
+  }
+
+  .search-box button:hover { background: #0078e7; }
+  .search-box button:active { transform: scale(0.97); }
+  .search-box button:disabled { background: #90c4f9; cursor: not-allowed; }
+
+  .error {
+    display: none;
+    background: #fff0f0;
+    color: #e05555;
+    border: 1px solid #f5c0c0;
+    border-radius: 12px;
+    padding: 10px 16px;
+    font-size: 0.9rem;
+    text-align: center;
+    margin-bottom: 12px;
+  }
+
+  .card {
+    background: #fff;
+    border-radius: 24px;
+    padding: 32px 28px 24px;
+    box-shadow: 0 8px 32px rgba(30,144,255,0.13);
+    display: none;
+    animation: fadeIn 0.4s ease;
+  }
+
+  @keyframes fadeIn { from { opacity:0; transform:translateY(14px); } to { opacity:1; transform:translateY(0); } }
+
+  .loading {
+    text-align: center;
+    color: #1e90ff;
+    font-size: 1rem;
+    padding: 28px 0;
+    display: none;
+    animation: pulse 1.2s infinite;
+  }
+
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+  .city-name {
+    font-size: 1.7rem;
+    font-weight: 700;
+    color: #1a2e44;
+    text-align: center;
+    margin-bottom: 4px;
+  }
+
+  .weather-emoji {
+    font-size: 5rem;
+    text-align: center;
+    margin: 14px 0 8px;
+    line-height: 1;
+  }
+
+  .temp {
+    font-size: 3rem;
+    font-weight: 800;
+    color: #1e90ff;
+    text-align: center;
+    line-height: 1;
+  }
+
+  .feels-like {
+    text-align: center;
+    color: #88b0cc;
+    font-size: 0.9rem;
+    margin-top: 6px;
+    margin-bottom: 6px;
+  }
+
+  .description {
+    text-align: center;
+    color: #557799;
+    font-size: 1rem;
+    font-weight: 500;
+    text-transform: capitalize;
+    margin-bottom: 24px;
+  }
+
+  .divider { height: 1px; background: #e8f2ff; margin-bottom: 20px; }
+
+  .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+  .info-card {
+    background: #f0f8ff;
+    border-radius: 16px;
+    padding: 16px;
+    text-align: center;
+  }
+
+  .info-icon { font-size: 1.5rem; margin-bottom: 4px; }
+  .info-label { font-size: 0.72rem; color: #88aacc; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+  .info-value { font-size: 1.15rem; font-weight: 700; color: #1a2e44; }
+
+  @media (max-width: 440px) {
+    h1 { font-size: 1.4rem; }
+    .temp { font-size: 2.4rem; }
+    .city-name { font-size: 1.4rem; }
+    .weather-emoji { font-size: 4rem; }
+    .card { padding: 24px 18px 20px; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>⛅ WeatherNow</h1>
+  <p class="subtitle">Real-time weather at your fingertips</p>
+
+  <div class="search-box">
+    <input type="text" id="cityInput" placeholder="e.g., London" autocomplete="off" />
+    <button id="searchBtn" onclick="getWeather()">Search</button>
+  </div>
+
+  <div class="error" id="error"></div>
+  <div class="loading" id="loading">🔍 Searching...</div>
+
+  <div class="card" id="weatherCard">
+    <div class="city-name" id="cityName"></div>
+    <div class="weather-emoji" id="weatherEmoji"></div>
+    <div class="temp" id="temp"></div>
+    <div class="feels-like" id="feelsLike"></div>
+    <div class="description" id="description"></div>
+    <div class="divider"></div>
+    <div class="info-grid">
+      <div class="info-card">
+        <div class="info-icon">💧</div>
+        <div class="info-label">Humidity</div>
+        <div class="info-value" id="humidity"></div>
+      </div>
+      <div class="info-card">
+        <div class="info-icon">💨</div>
+        <div class="info-label">Wind Speed</div>
+        <div class="info-value" id="wind"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const API_KEY = "27f27ed28cba167abd971a95ad50d25f";
+
+  const emojiMap = {
+    Clear: "☀️", Clouds: "☁️", Rain: "🌧️", Drizzle: "🌦️",
+    Snow: "❄️", Thunderstorm: "⛈️", Mist: "🌫️", Smoke: "🌫️",
+    Haze: "🌫️", Fog: "🌫️", Dust: "🌪️", Sand: "🌪️", Tornado: "🌪️"
+  };
+
+  const $ = id => document.getElementById(id);
+
+  function showError(msg) {
+    $("error").textContent = msg;
+    $("error").style.display = "block";
+    $("weatherCard").style.display = "none";
+    $("loading").style.display = "none";
+    $("searchBtn").disabled = false;
+  }
+
+  function hideError() { $("error").style.display = "none"; }
+
+  async function getWeather() {
+    const city = $("cityInput").value.trim();
+    if (!city) { showError("Please enter a city name."); return; }
+
+    hideError();
+    $("weatherCard").style.display = "none";
+    $("loading").style.display = "block";
+    $("searchBtn").disabled = true;
+
+    try {
+      const url = `https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(city)}&appid=${API_KEY}&units=metric`;
+      const res = await fetch(url);
+      const data = await res.json();
+
+      $("loading").style.display = "none";
+      $("searchBtn").disabled = false;
+
+      if (data.cod === 401 || data.cod === "401") { showError("Invalid API key."); return; }
+      if (data.cod === 404 || data.cod === "404") { showError("City not found. Try again."); return; }
+      if (data.cod !== 200 && data.cod !== "200") { showError(`Error: ${data.message || "Something went wrong."}`); return; }
+
+      const main = data.weather[0].main;
+      $("cityName").textContent = `${data.name}, ${data.sys.country}`;
+      $("weatherEmoji").textContent = emojiMap[main] || "🌡️";
+      $("temp").textContent = `${Math.round(data.main.temp)}°C`;
+      $("feelsLike").textContent = `Feels like ${Math.round(data.main.feels_like)}°C`;
+      $("description").textContent = data.weather[0].description;
+      $("humidity").textContent = `${data.main.humidity}%`;
+      $("wind").textContent = `${(data.wind.speed * 3.6).toFixed(1)} km/h`;
+      $("weatherCard").style.display = "block";
+
+    } catch (e) {
+      showError("Network error. Check your connection.");
+      $("searchBtn").disabled = false;
+    }
+  }
+
+  $("cityInput").addEventListener("keydown", e => { if (e.key === "Enter") getWeather(); });
+</script>
+</body>
+</html>
